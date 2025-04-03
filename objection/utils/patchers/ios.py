@@ -212,10 +212,23 @@ class IosPatcher(BasePlatformPatcher):
 
         click.secho('No provision file specified, searching for one...', bold=True)
 
-        # locate a valid mobile provision on disk in: ~/Library/Developer/Xcode/DerivedData/
-        possible_provisions = [os.path.join(dp, f) for dp, dn, fn in
-                               os.walk(os.path.expanduser('~/Library/Developer/Xcode/DerivedData/'))
-                               for f in fn if 'embedded.mobileprovision' in f]
+        # locate a valid mobile provision on disk in: ~/Library/Developer/Xcode/DerivedData/ for XCODE 16 compatibility provisions located in: ~/Library/Developer/Xcode/UserData/Provisioning Profiles
+        def find_mobileprovisions():
+        paths_to_check = [
+            os.path.expanduser('~/Library/Developer/Xcode/DerivedData/'),
+            os.path.expanduser('~/Library/Developer/Xcode/UserData/Provisioning Profiles')
+        ]
+    
+    possible_provisions = []
+    
+    for path in paths_to_check:
+        if os.path.exists(path):
+            for dp, dn, fn in os.walk(path):
+                possible_provisions.extend(
+                    os.path.join(dp, f) for f in fn if f.endswith('.mobileprovision')
+                )
+    
+    return possible_provisions
 
         if len(possible_provisions) <= 0:
             message = 'No provisioning files found. Please specify one or generate one by building an app.'
